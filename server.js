@@ -4,7 +4,7 @@ const cors = require("cors");
 const mysql = require("mysql");
 require("dotenv").config();
 
-const port = process.env.SERVER_PORT || 3000;
+const port = process.env.SERVER_PORT || 8080;
 
 const con = mysql.createConnection({
   host: process.env.MYSQL_DB_HOST,
@@ -24,8 +24,27 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get("/", (req, res) => {
-  res.send("This boilerplate is working!");
+app.post("/add-user", (req, res) => {
+  const data = req.body;
+  if (data.fullname && data.company && data.address) {
+    con.query(
+      `INSERT INTO users (name, company, address)
+       VALUES ('${data.fullname}', '${data.company}', '${data.address}')`,
+      (err, result) => {
+        if (err) {
+          res
+            .status(400)
+            .send(
+              "The DB has not added any records due to an internal problem"
+            );
+        } else {
+          res.status(201).json({ id: result.insertId });
+        }
+      }
+    );
+  } else {
+    res.status(400).send("The information provided is not correct.");
+  }
 });
 
 app.listen(port, () => console.log(`Server is running on port ${port}`));
